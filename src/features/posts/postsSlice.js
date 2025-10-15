@@ -1,0 +1,27 @@
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
+import axios from 'axios'
+
+// Fetch from jsonplaceholder and replicate to reach 500 items
+export const fetchPosts = createAsyncThunk('posts/fetchPosts', async () => {
+  const res = await axios.get('https://jsonplaceholder.typicode.com/posts')
+  const base = res.data // 100 items
+  const replicated = []
+  while (replicated.length < 500) {
+    replicated.push(...base.map((p, i) => ({ ...p, id: replicated.length + i + 1 })))
+  }
+  return replicated.slice(0, 500)
+})
+
+const postsSlice = createSlice({
+  name: 'posts',
+  initialState: { data: [], status: 'idle', error: null },
+  reducers: {},
+  extraReducers: (builder) => {
+    builder
+      .addCase(fetchPosts.pending, (state) => { state.status = 'loading' })
+      .addCase(fetchPosts.fulfilled, (state, action) => { state.status = 'succeeded'; state.data = action.payload })
+      .addCase(fetchPosts.rejected, (state, action) => { state.status = 'failed'; state.error = action.error.message })
+  }
+})
+
+export default postsSlice.reducer
